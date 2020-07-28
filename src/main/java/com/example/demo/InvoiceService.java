@@ -11,13 +11,10 @@ public class InvoiceService {
         int volumeCredits = 0;
         StringBuilder result = new StringBuilder(String.format("Statement for %s \n", invoice.getCustomer()));
         for (Invoice.Performance performance : invoice.getPerformances()) {
-            Play.SpecificPlay play = plays.getPlayMap().get(performance.getPlayID());
+            Play.SpecificPlay play = this.playFor(performance, plays);
             int thisAmount = amountFor(performance, play);
             //add volume credits
-            volumeCredits += Math.max(performance.getAudience() - 30, 0);
-            if (Objects.equals("comedy", play.getType())) {
-                volumeCredits += Math.floor(performance.getAudience() / 5);
-            }
+            volumeCredits += this.volumeCreditsFor(performance, play);
             //print line for this order
             result.append(play.getName()).append(": $").append(thisAmount / 100)
                     .append("($").append(performance.getAudience()).append(" seats) \n");
@@ -26,6 +23,19 @@ public class InvoiceService {
         result.append("Amount own is $").append(totalAmount / 100).append("\n");
         result.append("you earn ").append(volumeCredits).append(" credits");
         return String.valueOf(result);
+    }
+
+    private int volumeCreditsFor(Invoice.Performance performance, Play.SpecificPlay play) {
+        int result = 0;
+        result += Math.max(performance.getAudience() - 30, 0);
+        if (Objects.equals("comedy", play.getType())) {
+            result += Math.floor(performance.getAudience() / 5);
+        }
+        return result;
+    }
+
+    private Play.SpecificPlay playFor(Invoice.Performance performance, Play plays) {
+        return plays.getPlayMap().get(performance.getPlayID());
     }
 
     private int amountFor(Invoice.Performance performance, Play.SpecificPlay play) {
